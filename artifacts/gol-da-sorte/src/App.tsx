@@ -635,7 +635,7 @@ export default function App() {
           apiCall(`/users/${userId}/add-points`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type: "win" }),
+            body: JSON.stringify({ type: "win", amount: gameConfigRef.current.bonusRow5 ?? 50 }),
           }),
         ]);
         if (playData?.user) setPlaysRemaining(playData.user.playsRemaining);
