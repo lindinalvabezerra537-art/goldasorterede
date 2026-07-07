@@ -54,13 +54,16 @@ if [ "$READY" -eq 0 ]; then
   sleep 5
 fi
 
-# Start Vite dev server (port 5000)
+# Start Vite dev server (port 5000) — invoke vite directly so PORT=5000 is not overridden
+# by the dev script's PORT=${PORT:-24365} default
 echo "Starting frontend..."
 pkill -9 -f "vite" 2>/dev/null || true
 kill_port 5000
 sleep 1
-NODE_OPTIONS="--max-http-header-size=65536" PORT=5000 BASE_PATH=/ pnpm --filter @workspace/gol-da-sorte run dev &
+cd /home/runner/workspace/artifacts/gol-da-sorte
+PORT=5000 BASE_PATH=/ NODE_OPTIONS="--max-http-header-size=65536" pnpm exec vite --config vite.config.ts --host 0.0.0.0 &
 VITE_PID=$!
+cd /home/runner/workspace
 
 # Trap exit signals to clean up both processes
 cleanup() {
