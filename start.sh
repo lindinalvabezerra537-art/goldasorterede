@@ -11,9 +11,8 @@ kill_port() {
   fi
 }
 
-# Kill any lingering frontend process
+# Kill any lingering frontend process on port 5000 only
 echo "Liberando porta 5000..."
-pkill -9 -f "vite" 2>/dev/null || true
 kill_port 5000
 sleep 1
 
@@ -27,10 +26,11 @@ cd /home/runner/workspace
 
 # Trap exit signals to clean up
 cleanup() {
+  local status=$?
   echo "Shutting down..."
-  pkill -9 -f "vite" 2>/dev/null || true
   kill $VITE_PID 2>/dev/null || true
-  exit 0
+  kill_port 5000
+  exit $status
 }
 trap cleanup SIGTERM SIGINT EXIT
 
