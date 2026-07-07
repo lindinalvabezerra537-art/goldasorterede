@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db, usersTable, referralsTable, rankingFollowsTable } from "@workspace/db";
-import { eq, and, sql, gte, desc, notInArray } from "drizzle-orm";
+import { eq, and, sql, gte, desc, notInArray, inArray } from "drizzle-orm";
 import { sendEvent, broadcastEvent } from "../app";
 
 const router = Router();
@@ -405,36 +405,72 @@ router.post("/:id/referral-reward", async (req, res) => {
   if (!checkAdmin(req, res)) return;
   const id = parseInt(req.params.id);
   if (!id || isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const [user] = await db.select({ playsRemaining: usersTable.playsRemaining, referralUnlocked: usersTable.referralUnlocked }).from(usersTable).where(eq(usersTable.id, id));
-  if (!user) { res.status(404).json({ error: "Usuário não encontrado" }); return; }
 
-  const referrals = await db
-    .select({ id: referralsTable.id, rewarded: referralsTable.rewarded })
-    .from(referralsTable)
-    .where(and(eq(referralsTable.referrerId, id), eq(referralsTable.rewarded, false)));
+  const result = await db.transaction(async (tx) => {
+    // Fetch referrer including who referred them (avô)
+    const [user] = await tx
+      .select({ playsRemaining: usersTable.playsRemaining, referralUnlocked: usersTable.referralUnlocked, rankingPoints: usersTable.rankingPoints, referredById: usersTable.referredById })
+      .from(usersTable)
+      .where(eq(usersTable.id, id));
+    if (!user) return null;
 
-  if (referrals.length === 0) {
-    res.json({ user, newReferrals: 0 });
-    return;
+    // Lock only the exact unrewarded referral rows for this user
+    const pendingReferrals = await tx
+      .select({ id: referralsTable.id })
+      .from(referralsTable)
+      .where(and(eq(referralsTable.referrerId, id), eq(referralsTable.rewarded, false)));
+
+    if (pendingReferrals.length === 0) return { user, count: 0, referredById: user.referredById };
+
+    const count = pendingReferrals.length;
+    const referralIds = pendingReferrals.map(r => r.id);
+
+    // ── 1ª geração: recompensar o indicador (id) — incremento atômico ────────
+    const [updated] = await tx.update(usersTable)
+      .set({
+        playsRemaining: sql`${usersTable.playsRemaining} + ${count * 5}`,
+        rankingPoints: sql`${usersTable.rankingPoints} + ${count * 10}`,
+        referralUnlocked: true,
+      })
+      .where(eq(usersTable.id, id))
+      .returning();
+
+    // Marcar apenas os IDs selecionados como recompensados
+    await tx.update(referralsTable)
+      .set({ rewarded: true })
+      .where(inArray(referralsTable.id, referralIds));
+
+    // ── 2ª geração: recompensar o avô — incremento atômico ───────────────────
+    let grandReferrerUpdated = null;
+    if (user.referredById) {
+      [grandReferrerUpdated] = await tx.update(usersTable)
+        .set({
+          playsRemaining: sql`${usersTable.playsRemaining} + ${count * 3}`,
+          rankingPoints: sql`${usersTable.rankingPoints} + ${count * 3}`,
+        })
+        .where(eq(usersTable.id, user.referredById))
+        .returning();
+    }
+
+    return { user: updated, count, referredById: user.referredById, grandReferrerUpdated };
+  });
+
+  if (!result) { res.status(404).json({ error: "Usuário não encontrado" }); return; }
+  if (result.count === 0) { res.json({ user: result.user, newReferrals: 0 }); return; }
+
+  // Notificar via SSE fora da transação
+  sendEvent(id, { type: "referral_reward", data: { addedPlays: result.count * 5, addedPoints: result.count * 10 } });
+  if (result.referredById && result.grandReferrerUpdated) {
+    sendEvent(result.referredById, { type: "referral_reward", data: { addedPlays: result.count * 3, addedPoints: result.count * 3 } });
   }
 
-  const bonusPerReferral = 5;
-  const totalBonus = referrals.length * bonusPerReferral;
-  const newPlays = (user.playsRemaining ?? 0) + totalBonus;
-
-  const [referrerUser] = await db.select({ rankingPoints: usersTable.rankingPoints }).from(usersTable).where(eq(usersTable.id, id));
-  const newRankingPoints = (referrerUser?.rankingPoints ?? 0) + referrals.length * 10;
-
-  const [updated] = await db.update(usersTable)
-    .set({ playsRemaining: newPlays, referralUnlocked: true, rankingPoints: newRankingPoints })
-    .where(eq(usersTable.id, id))
-    .returning();
-
-  await db.update(referralsTable)
-    .set({ rewarded: true })
-    .where(eq(referralsTable.referrerId, id));
-
-  res.json({ user: updated, newReferrals: referrals.length, addedPoints: referrals.length * 10 });
+  res.json({
+    user: result.user,
+    newReferrals: result.count,
+    addedPoints: result.count * 10,
+    grandReferrerId: result.referredById ?? null,
+    grandReferrerUpdated: result.grandReferrerUpdated ?? null,
+  });
 });
 
 // ── RANKING SYSTEM ──
