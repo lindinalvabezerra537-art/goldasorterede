@@ -1,12 +1,23 @@
 #!/bin/bash
 
-# Kill anything holding our ports
+# Helper: kill all processes on a given TCP port using lsof (fuser not available on Replit)
+kill_port() {
+  local port=$1
+  local pids
+  pids=$(lsof -ti tcp:"$port" 2>/dev/null)
+  if [ -n "$pids" ]; then
+    echo "  Liberando porta $port (PIDs: $pids)..."
+    echo "$pids" | xargs kill -9 2>/dev/null || true
+  fi
+}
+
+# Kill anything holding our ports or matching our process patterns
 echo "Liberando portas..."
 pkill -9 -f "dist/index.mjs" 2>/dev/null || true
-pkill -9 -f "api-server" 2>/dev/null || true
-fuser -k 5000/tcp 2>/dev/null || true
-fuser -k 8081/tcp 2>/dev/null || true
-sleep 1
+pkill -9 -f "vite" 2>/dev/null || true
+kill_port 8081
+kill_port 5000
+sleep 2
 
 # Build the API server first
 echo "Building API server..."
@@ -16,6 +27,7 @@ cd /home/runner/workspace
 # Start API server in background (port 8081)
 echo "Starting API server..."
 pkill -9 -f "dist/index.mjs" 2>/dev/null || true
+kill_port 8081
 sleep 1
 PORT=8081 node --enable-source-maps /home/runner/workspace/artifacts/api-server/dist/index.mjs &
 API_PID=$!
@@ -35,6 +47,7 @@ done
 if [ "$READY" -eq 0 ]; then
   echo "API server failed to start. Killing and retrying..."
   pkill -9 -f "dist/index.mjs" 2>/dev/null || true
+  kill_port 8081
   sleep 2
   PORT=8081 node --enable-source-maps /home/runner/workspace/artifacts/api-server/dist/index.mjs &
   API_PID=$!
@@ -43,6 +56,9 @@ fi
 
 # Start Vite dev server (port 5000)
 echo "Starting frontend..."
+pkill -9 -f "vite" 2>/dev/null || true
+kill_port 5000
+sleep 1
 NODE_OPTIONS="--max-http-header-size=65536" PORT=5000 BASE_PATH=/ pnpm --filter @workspace/gol-da-sorte run dev &
 VITE_PID=$!
 
@@ -50,6 +66,7 @@ VITE_PID=$!
 cleanup() {
   echo "Shutting down..."
   pkill -9 -f "dist/index.mjs" 2>/dev/null || true
+  pkill -9 -f "vite" 2>/dev/null || true
   kill $VITE_PID 2>/dev/null || true
   exit 0
 }
@@ -60,6 +77,7 @@ while true; do
   if ! kill -0 $API_PID 2>/dev/null; then
     echo "API server stopped unexpectedly. Restarting..."
     pkill -9 -f "dist/index.mjs" 2>/dev/null || true
+    kill_port 8081
     sleep 2
     PORT=8081 node --enable-source-maps /home/runner/workspace/artifacts/api-server/dist/index.mjs &
     API_PID=$!
