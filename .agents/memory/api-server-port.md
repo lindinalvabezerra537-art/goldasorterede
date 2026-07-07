@@ -1,14 +1,22 @@
 ---
 name: API Server port fix
-description: Why the api-server must run on port 8081, not 8080
+description: Artifact-managed workflow port assignments — which port each artifact expects
 ---
 
-The api-server artifact was originally configured on port 8080. Replit's `.replit` file had `localPort = 8080` with NO `externalPort`, meaning restart_workflow (which verifies ports externally) always failed with DIDNT_OPEN_A_PORT even though the server started fine locally.
+Each artifact workflow has a platform-assigned port it MUST bind to. These are fixed by the artifact system and cannot be changed via configureWorkflow (managed workflows are read-only).
 
-Port 8081 has `externalPort = 8081` in `.replit` and works correctly with restart_workflow.
+| Artifact workflow | Expected port | Notes |
+|---|---|---|
+| `artifacts/api-server: API Server` | **8081** | Platform waits for this port; set via `PORT=8081` in dev script |
+| `artifacts/gol-da-sorte: web` | **24365** | Registered in `.replit` [[ports]]; set via `PORT=24365` in dev script |
+| `artifacts/mockup-sandbox: Component Preview Server` | **8080** | Set via `PORT=8080` in dev script |
 
-**Fix applied:** Changed artifact.toml `localPort` and `PORT` env var from 8080 to 8081.
+PORT is baked into each artifact's `dev` script in its `package.json` (not the workflow command, which is locked).
 
-**Why:** Replit's restart_workflow verifies ports via the external proxy. Only ports with an `externalPort` mapping in `.replit` pass this check.
+The Vite proxy in `artifacts/gol-da-sorte/vite.config.ts` proxies `/api` to `http://localhost:${API_PORT ?? "8081"}`.
 
-**How to apply:** If the api-server ever needs to be reconfigured, always use port 8081 (or another port that has an externalPort mapping in .replit). Never use port 8080 for this artifact.
+`start.sh` (used by any manual "Start application" workflow) also uses PORT=8081 for the API and PORT=5000 for the frontend.
+
+**Why:** Replit's artifact system assigns fixed ports per artifact and waits for those exact ports. Setting a different PORT causes the workflow to time out with "didn't open port XXXX".
+
+**How to apply:** Never change the PORT in the dev scripts without first confirming the platform's expected port from the workflow error message ("didn't open port N").
