@@ -1,0 +1,127 @@
+uploads = []
+
+[[generated]]
+id = "lrh2wcTfOKqHro0TPZ8dG"
+uri = "file://artifacts/gol-da-sorte/public/icon-512.png"
+type = "image"
+title = "soccer_saturn_6social_unique"
+
+[[outputs]]
+id = "iowOdcqpwDeP-HRskRFM-"
+uri = "file://artifacts/gol-da-sorte/public/opengraph.jpg"
+type = "image"
+title = "SSH Key - Public key for GitHub"
+
+[[outputs]]
+id = "7sE9BJYSiAl1IepRbdx9u"
+uri = "file://screenshots/gol-da-sorte-ranking-v2.jpg"
+type = "image"
+title = "Ranking com CIDADE / BRASIL / ESTADO nos cards"
+
+[[outputs]]
+id = "wEkjTc_bwrmJRFYdRr7BR"
+uri = "file://screenshots/gol-da-sorte-tela-atual.jpg"
+type = "image"
+title = "Tela atual do app (porta 5000)"
+
+[[outputs]]
+id = "D5MnGVVcNBO-164d2ey6s"
+uri = "file://screenshots/gol-da-sorte-24365.jpg"
+type = "image"
+title = "App na porta 24365 (workflow artifact)"
+
+[[outputs]]
+id = "vwCqzPCExAbdy6yr7Bnez"
+uri = "file://screenshots/gol-da-sorte-5000.jpg"
+type = "image"
+title = "App na porta 5000 (Start application)"
+
+[[outputs]]
+id = "NEu3Yd5lPo-AbfYGS4Y1x"
+uri = "file://screenshots/gol-da-sorte-app-5000.jpg"
+type = "image"
+title = "App rodando na porta 5000"
+
+[[outputs]]
+id = "4HEnln9HhGptCBN8vzVgB"
+uri = "file://screenshots/gol-da-sorte-dev-domain.png"
+type = "image"
+title = "App acessível pelo domínio do Replit"
+
+[[outputs]]
+id = "qUnU_K3aZrVMt2kRrWnuT"
+uri = "file://screenshots/gol-da-sorte-dev-ok.png"
+type = "image"
+title = "Projeto visível no preview Replit"
+
+[[outputs]]
+id = "556ByGL59ibUcwPsJwaQE"
+uri = "file://screenshots/gol-da-sorte-dev-now.png"
+type = "image"
+title = "App visível no preview agora"
+
+[[outputs]]
+id = "vNNQkPhUOKw6fcI8XPwP-"
+uri = "file://screenshots/gol-da-sorte-inicio-dia.jpg"
+type = "image"
+title = "Estado atual - início do dia"
+
+[[outputs]]
+id = "DdIauM0y2uwE4_U3jqPQb"
+uri = "file://screenshots/admin-panel-sem-tarjas.jpg"
+type = "image"
+title = "Painel admin sem Valor Acumulado, Prêmios e Tarjas"
+
+[[outputs]]
+id = "in0xrxzWhFoiZWuZsVmKH"
+uri = "file://screenshots/gol-voltou-tela.jpg"
+type = "image"
+title = "Projeto voltou — app ainda na tela"
+
+[[outputs]]
+id = "EE4OjD1mlQluDsETrW5qf"
+uri = "file://screenshots/painel-ranking-existente.jpg"
+type = "image"
+title = "Ferramenta de pontuação do ranking já existe"
+
+[[outputs]]
+id = "hUYlNDlTdHRWUSHU3b74l"
+uri = "file://screenshots/ranking-corrigido-app.jpg"
+type = "image"
+title = "Ranking funcionando como plano de carreira"
+
+[[outputs]]
+id = "hfbZAZuLJimDfH-fHZiG1"
+uri = "file://screenshots/ranking-exclusivo-app.jpg"
+type = "image"
+title = "Ranking exclusivo funcionando"
+
+[[outputs]]
+id = "Ogqjgvc6m6lIvruzSkRE-"
+uri = "file://screenshots/ranking-independente.jpg"
+type = "image"
+title = "Ranking independente - Diana no PI"
+
+[[outputs]]
+id = "ijo_w-0t4_EMFNPV62VlM"
+uri = "file://screenshots/ranking-campeoes.jpg"
+type = "image"
+title = "Ranking: 1 campeão por categoria"
+
+[[outputs]]
+id = "OETutiIJMU39eM5CA_cCz"
+uri = "file://screenshots/seguir-so-texto.jpg"
+type = "image"
+title = "Botão SEGUIR sem estrela"
+
+[[outputs]]
+id = "D6yaG863VwcrLzwKfn0Ut"
+uri = "file://artifacts/gol-da-sorte/public/icon-512.png"
+type = "image"
+title = "Bola + Anel com Redes Sociais (um TikTok)"
+
+[[outputs]]
+id = "ezEJ-xqkkY0yNDpR-_eqy"
+uri = "file://artifacts/gol-da-sorte/public/icon-192.png"
+type = "image"
+title = "Ícone do App (192x192)"
