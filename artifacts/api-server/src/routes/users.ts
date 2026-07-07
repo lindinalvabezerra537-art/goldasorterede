@@ -444,17 +444,17 @@ router.post("/:id/add-points", async (req, res) => {
   const id = parseInt(req.params.id);
   const { type, amount } = req.body as { type?: string; amount?: number };
   if (!id || isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (typeof amount !== "number" || amount <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
   if (!(await verifyUserIdentity(req, res, id))) return;
-
 
   const [user] = await db.select({ rankingPoints: usersTable.rankingPoints, cidade: usersTable.cidade, estado: usersTable.estado }).from(usersTable).where(eq(usersTable.id, id));
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
-  const newPoints = (user.rankingPoints ?? 0) + addPoints;
+  const newPoints = (user.rankingPoints ?? 0) + amount;
   const [updated] = await db.update(usersTable).set({ rankingPoints: newPoints }).where(eq(usersTable.id, id)).returning();
 
   // Notifica o usuário sobre atualização de pontos
-  sendEvent(id, { type: "points_updated", data: { rankingPoints: newPoints, added: addPoints } });
+  sendEvent(id, { type: "points_updated", data: { rankingPoints: newPoints, added: amount } });
 
   // Verificar se SUPEROU um LÍDER EXISTENTE (com pontos > 0) em algum escopo
   let enteredRanking: string | null = null;
@@ -483,7 +483,7 @@ router.post("/:id/add-points", async (req, res) => {
   // Sempre notifica TODOS os clientes para atualizarem o ranking em tempo real
   broadcastEvent({ type: "ranking_changed", data: { scope: enteredRanking ?? "update", userId: id } });
 
-  res.json({ user: updated, added: addPoints, total: newPoints, enteredRanking });
+  res.json({ user: updated, added: amount, total: newPoints, enteredRanking });
 });
 
 // Atualizar link social do ranking

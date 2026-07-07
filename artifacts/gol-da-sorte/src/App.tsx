@@ -400,6 +400,7 @@ export default function App() {
   const prevCampeaoUserId = useRef<string>("");
   const announcingCampeaoRef = useRef<string>("");
   const lastAnnouncedChampId = useRef<string>("");
+  const championLockedUntil = useRef<number>(0);
   const [showChampionModal, setShowChampionModal] = useState(false);
   const [championLinkInput, setChampionLinkInput] = useState("");
   const [showChampionFollowModal, setShowChampionFollowModal] = useState(false);
@@ -687,6 +688,7 @@ export default function App() {
           });
           prevCampeaoUserId.current = String(userId);
           announcingCampeaoRef.current = String(userId);
+          championLockedUntil.current = Date.now() + 8_000;
           showToast("🏆 Você é o Atual Campeão de Performance!");
         }
       } else {
@@ -827,6 +829,8 @@ export default function App() {
           const newUserId = campeaoData.userId ?? "";
           const newNome = campeaoData.nome ?? "";
           const newCidadeEstado = campeaoData.cidadeEstado ?? "";
+          // Skip overwrite while champion registration is still propagating to DB
+          if (Date.now() < championLockedUntil.current) return;
           setAtualCampeao({
             nome: newNome,
             cidadeEstado: newCidadeEstado,
@@ -3386,6 +3390,7 @@ export default function App() {
                 localStorage.setItem("claimedChampionUserId", String(userId));
                 prevCampeaoUserId.current = String(userId);
                 announcingCampeaoRef.current = String(userId);
+                championLockedUntil.current = Date.now() + 8_000;
                 setShowChampionModal(false);
                 setChampionLinkInput("");
                 showToast("🏆 Você agora é o Atual Campeão!");
