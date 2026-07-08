@@ -35,7 +35,7 @@ export default function ChatRoom({ userId, userName, userFoto, onClose }: Props)
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
+    const interval = setInterval(fetchMessages, 20_000);
 
     // Escuta mensagens em tempo real via SSE do App.tsx
     const onSseMessage = (e: Event) => {

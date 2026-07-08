@@ -7,10 +7,10 @@ const router = Router();
 
 router.get("/", async (_req, res) => {
   const rows = await db.execute(sql`
-    SELECT id, user_id, user_name, user_foto, message, created_at
+    SELECT id, user_id, user_name, message, created_at
     FROM chat_messages
     ORDER BY created_at DESC
-    LIMIT 80
+    LIMIT 30
   `);
   const messages = [...(rows.rows as any[])].reverse();
   res.json({ messages });

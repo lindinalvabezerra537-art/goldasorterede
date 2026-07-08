@@ -824,7 +824,7 @@ export default function App() {
     fetchSettings();
     // Polling leve do campeão para anúncio em tempo real a cada 3s
     const pollChamp = setInterval(() => {
-      apiCall("/settings/atual-campeao").then((campeaoData: any) => {
+      apiCall("/settings/atual-campeao?_t=" + Date.now()).then((campeaoData: any) => {
         if (campeaoData) {
           const newUserId = campeaoData.userId ?? "";
           const newNome = campeaoData.nome ?? "";
@@ -849,7 +849,7 @@ export default function App() {
           }
         }
       });
-    }, 3_000);
+    }, 15_000);
     return () => clearInterval(pollChamp);
   }, [fetchSettings]);
 
@@ -870,7 +870,7 @@ export default function App() {
         .catch(() => {});
     };
     fetchOnline();
-    const interval = setInterval(fetchOnline, 8_000);
+    const interval = setInterval(fetchOnline, 30_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -896,7 +896,7 @@ export default function App() {
         .catch(() => {});
     };
     fetchPositions();
-    const interval = setInterval(fetchPositions, 2_000);
+    const interval = setInterval(fetchPositions, 10_000);
     return () => clearInterval(interval);
   }, [userId]);
 
@@ -918,7 +918,7 @@ export default function App() {
         .catch(() => {});
     };
     fetchChatCount();
-    const interval = setInterval(fetchChatCount, 15_000);
+    const interval = setInterval(fetchChatCount, 60_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -980,7 +980,7 @@ export default function App() {
         });
       }
     };
-    const interval = setInterval(refresh, 10_000);
+    const interval = setInterval(refresh, 30_000);
     return () => clearInterval(interval);
   }, [userId]);
 

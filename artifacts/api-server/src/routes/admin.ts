@@ -77,17 +77,38 @@ router.get("/stats", async (req, res) => {
   }
 });
 
+const ADMIN_LIST_FIELDS = {
+  id: usersTable.id,
+  name: usersTable.name,
+  phone: usersTable.phone,
+  cidade: usersTable.cidade,
+  estado: usersTable.estado,
+  playsRemaining: usersTable.playsRemaining,
+  hasPaid: usersTable.hasPaid,
+  rankingPoints: usersTable.rankingPoints,
+  bloqueado: usersTable.bloqueado,
+  warnings: usersTable.warnings,
+  warningMessage: usersTable.warningMessage,
+  createdAt: usersTable.createdAt,
+  ultimoLogin: usersTable.ultimoLogin,
+  saldo: usersTable.saldo,
+  referralCode: usersTable.referralCode,
+  referralUnlocked: usersTable.referralUnlocked,
+  freePlaysTotalUsed: usersTable.freePlaysTotalUsed,
+  paidPlaysUsed: usersTable.paidPlaysUsed,
+};
+
 router.get("/users", async (req, res) => {
   if (!checkAdmin(req, res)) return;
   try {
     const search = (req.query.search as string) || "";
     let users;
     if (search) {
-      users = await db.select().from(usersTable).where(
+      users = await db.select(ADMIN_LIST_FIELDS).from(usersTable).where(
         or(ilike(usersTable.name, `%${search}%`), ilike(usersTable.phone, `%${search}%`))
       ).orderBy(sql`created_at DESC`).limit(100);
     } else {
-      users = await db.select().from(usersTable).orderBy(sql`created_at DESC`).limit(100);
+      users = await db.select(ADMIN_LIST_FIELDS).from(usersTable).orderBy(sql`created_at DESC`).limit(100);
     }
     res.json({ users });
   } catch (err) {
@@ -305,7 +326,7 @@ router.get("/ranking", async (req, res) => {
   if (!checkAdmin(req, res)) return;
   try {
     const allUsers = await db
-      .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade, estado: usersTable.estado, rankingPoints: usersTable.rankingPoints, fotoBase64: usersTable.fotoBase64, rankingSocialLink: usersTable.rankingSocialLink })
+      .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade, estado: usersTable.estado, rankingPoints: usersTable.rankingPoints, fotoBase64: sql<string | null>`NULL`, rankingSocialLink: usersTable.rankingSocialLink })
       .from(usersTable)
       .orderBy(desc(usersTable.rankingPoints));
     const result = computeRankings(allUsers);
@@ -344,7 +365,7 @@ router.get("/ranking/search", async (req, res) => {
       res.status(400).json({ error: "Informe estado ou cidade" }); return;
     }
     let query = db
-      .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade, estado: usersTable.estado, rankingPoints: usersTable.rankingPoints, fotoBase64: usersTable.fotoBase64, rankingSocialLink: usersTable.rankingSocialLink })
+      .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade, estado: usersTable.estado, rankingPoints: usersTable.rankingPoints, rankingSocialLink: usersTable.rankingSocialLink })
       .from(usersTable)
       .orderBy(desc(usersTable.rankingPoints));
     if (cidade) {

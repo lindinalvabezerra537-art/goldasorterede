@@ -141,7 +141,7 @@ export default function MapaBrasil() {
       }
     };
     fetchLocations();
-    const interval = setInterval(fetchLocations, 10000);
+    const interval = setInterval(fetchLocations, 120_000);
     return () => clearInterval(interval);
   }, []);
 

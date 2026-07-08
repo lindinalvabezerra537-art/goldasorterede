@@ -197,7 +197,7 @@ router.post("/login", async (req, res) => {
 router.get("/online", async (_req, res) => {
   const since = new Date(Date.now() - 5 * 60 * 1000);
   const users = await db
-    .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade, fotoBase64: usersTable.fotoBase64 })
+    .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade })
     .from(usersTable)
     .where(gte(usersTable.ultimoLogin, since))
     .orderBy(desc(usersTable.ultimoLogin))
@@ -250,7 +250,6 @@ router.get("/pirate-positions", async (_req, res) => {
     .select({
       id: usersTable.id,
       name: usersTable.name,
-      fotoBase64: usersTable.fotoBase64,
       piratePos: usersTable.piratePos,
       lastPirateMove: usersTable.lastPirateMove,
     })
@@ -578,7 +577,7 @@ router.put("/:id/profile", async (req, res) => {
 
 async function getRankings() {
   const allUsers = await db
-    .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade, estado: usersTable.estado, fotoBase64: usersTable.fotoBase64, rankingPoints: usersTable.rankingPoints, rankingSocialLink: usersTable.rankingSocialLink })
+    .select({ id: usersTable.id, name: usersTable.name, cidade: usersTable.cidade, estado: usersTable.estado, rankingPoints: usersTable.rankingPoints, rankingSocialLink: usersTable.rankingSocialLink })
     .from(usersTable)
     .orderBy(desc(usersTable.rankingPoints));
 
@@ -643,7 +642,6 @@ const TOP10_FIELDS = {
   name: usersTable.name,
   cidade: usersTable.cidade,
   estado: usersTable.estado,
-  fotoBase64: usersTable.fotoBase64,
   rankingPoints: usersTable.rankingPoints,
 };
 
