@@ -35,7 +35,21 @@ export default function EditPhotoModal({ userId, onClose, onUpdated }: Props) {
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result as string);
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX = 300;
+        const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setPreview(canvas.toDataURL("image/jpeg", 0.75));
+      };
+      img.src = result;
+    };
     reader.readAsDataURL(file);
   };
 

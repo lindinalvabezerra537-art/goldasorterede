@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { db, usersTable, referralsTable, rankingFollowsTable } from "@workspace/db";
 import { eq, and, sql, gte, desc, notInArray, inArray } from "drizzle-orm";
 import { sendEvent, broadcastEvent } from "../app";
+import { compressPhotoBase64 } from "../lib/imageCompress";
 
 const router = Router();
 
@@ -144,12 +145,14 @@ router.post("/register", async (req, res) => {
     }
   }
 
+  const compressedFoto = fotoBase64 ? await compressPhotoBase64(fotoBase64) : null;
+
   const [user] = await db.insert(usersTable).values({
     name,
     phone: cleanPhone,
     cidade,
     estado: estado.toUpperCase(),
-    fotoBase64: fotoBase64 || null,
+    fotoBase64: compressedFoto,
     ipAddress: clientIp,
     referralCode: myCode,
     referredById: referredById ?? undefined,
@@ -762,9 +765,11 @@ router.post("/:id/photo", async (req, res) => {
   const { fotoBase64 } = req.body as { fotoBase64?: string };
   if (!fotoBase64) { res.status(400).json({ error: "fotoBase64 required" }); return; }
 
+  const compressedFoto = await compressPhotoBase64(fotoBase64);
+
   const [updated] = await db
     .update(usersTable)
-    .set({ fotoBase64: fotoBase64 })
+    .set({ fotoBase64: compressedFoto })
     .where(eq(usersTable.id, id))
     .returning();
 
