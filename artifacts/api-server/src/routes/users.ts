@@ -277,6 +277,18 @@ router.patch("/:id/pirate-pos", async (req, res) => {
   res.json({ ok: true, piratePos: updated?.piratePos ?? pos });
 });
 
+// ── Fotos em lote (lazy loading) — deve vir ANTES de /:id ─────────────────
+router.get("/fotos", async (req, res) => {
+  const raw = String(req.query.ids || "");
+  const ids = raw.split(",").map(Number).filter(n => n > 0 && !isNaN(n)).slice(0, 100);
+  if (ids.length === 0) { res.json({ fotos: [] }); return; }
+  const fotos = await db
+    .select({ id: usersTable.id, fotoBase64: usersTable.fotoBase64 })
+    .from(usersTable)
+    .where(inArray(usersTable.id, ids));
+  res.json({ fotos });
+});
+
 router.get("/:id", async (req, res) => {
   const id = parseInt(req.params.id);
   if (!id || isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }

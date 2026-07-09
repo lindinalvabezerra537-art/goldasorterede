@@ -458,8 +458,28 @@ export default function App() {
   const [piratePos, setPiratePos] = useState(0);
   const [pirateTargetPos, setPirateTargetPos] = useState<number | null>(null);
   const [pirateAnimPos, setPirateAnimPos] = useState<number | null>(null);
-  const [otherPlayers, setOtherPlayers] = useState<{ id: number; name: string; fotoBase64: string | null; piratePos: number }[]>([]);
+  const [otherPlayers, setOtherPlayers] = useState<{ id: number; name: string; piratePos: number }[]>([]);
   const [diceValues, setDiceValues] = useState<[number, number] | null>(null);
+
+  // ── Cache de fotos (lazy loading) ──────────────────────────────────────────
+  const photoCacheRef = useRef<Record<number, string>>({});
+  const [photoCache, setPhotoCache] = useState<Record<number, string>>({});
+  const loadPhotos = useCallback(async (ids: number[]) => {
+    const newIds = ids.filter(id => id > 0 && !photoCacheRef.current[id]);
+    if (newIds.length === 0) return;
+    try {
+      const res = await fetch(`/api/users/fotos?ids=${newIds.join(",")}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.fotos)) {
+        const updates: Record<number, string> = {};
+        for (const { id, fotoBase64 } of data.fotos) {
+          if (fotoBase64) { photoCacheRef.current[id] = fotoBase64; updates[id] = fotoBase64; }
+        }
+        if (Object.keys(updates).length > 0) setPhotoCache(prev => ({ ...prev, ...updates }));
+      }
+    } catch {}
+  }, []);
   const [dicePhase, setDicePhase] = useState<"idle" | "rolling" | "choosing" | "moving">("idle");
   const [diceAnim, setDiceAnim] = useState<[number, number]>([1, 1]);
 
@@ -866,7 +886,12 @@ export default function App() {
     const fetchOnline = () => {
       fetch("/api/users/online")
         .then(r => r.ok ? r.json() : null)
-        .then(data => { if (data?.users) setOnlineUsers(data.users); })
+        .then(data => {
+          if (data?.users) {
+            setOnlineUsers(data.users);
+            loadPhotos(data.users.map((u: { id: number }) => u.id));
+          }
+        })
         .catch(() => {});
     };
     fetchOnline();
@@ -882,7 +907,7 @@ export default function App() {
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (data?.users) {
-            const allUsers = data.users as { id: number; name: string; fotoBase64: string | null; piratePos: number }[];
+            const allUsers = data.users as { id: number; name: string; piratePos: number }[];
             const me = allUsers.find(u => u.id === userId);
             if (me && me.piratePos === 0 && piratePos !== 0 && !pirateTargetPos) {
               try { playHorrorScream(); } catch {}
@@ -891,6 +916,7 @@ export default function App() {
             }
             const others = allUsers.filter(u => u.id !== userId);
             setOtherPlayers(others);
+            loadPhotos(others.map(u => u.id));
           }
         })
         .catch(() => {});
@@ -962,6 +988,12 @@ export default function App() {
           myCity: prev?.myCity,
           myState: prev?.myState,
         }));
+        const refreshRankIds = [
+          ...(cidadeRank?.users ?? []),
+          ...(estadoRank?.users ?? []),
+          ...(brasilRank?.users ?? []),
+        ].map((u: { id: number }) => u.id);
+        loadPhotos(refreshRankIds);
       }
       if (segData?.seguidos) {
         const seguidos: number[] = segData.seguidos;
@@ -1026,6 +1058,12 @@ export default function App() {
               myCity: city,
               myState: state,
             });
+            const rankIds = [
+              ...(cData?.users?.slice(0, 3) ?? []),
+              ...(eData?.users?.slice(0, 3) ?? []),
+              ...(bData?.users?.slice(0, 3) ?? []),
+            ].map((u: { id: number }) => u.id);
+            loadPhotos(rankIds);
             if (myData?.user) {
               setRankingMyPosition({
                 cidadeRank: myData.cidadeRank,
@@ -1659,8 +1697,8 @@ export default function App() {
                       background: "#1a1a1a",
                       flexShrink: 0,
                     }}>
-                      {u.fotoBase64 ? (
-                        <img src={u.fotoBase64} alt={u.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }} />
+                      {photoCache[u.id] ? (
+                        <img src={photoCache[u.id]} alt={u.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block" }} />
                       ) : (
                         <svg viewBox="0 0 100 110" style={{ width: "100%", height: "100%" }} fill={isMe ? "#FFD700" : "#555"}>
                           <circle cx="50" cy="28" r="22" />
@@ -1809,8 +1847,8 @@ export default function App() {
               boxShadow: "0 0 10px 3px rgba(80,160,255,0.50)",
             }}
           >
-            {op.fotoBase64 ? (
-              <img src={op.fotoBase64} alt={op.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
+            {photoCache[op.id] ? (
+              <img src={photoCache[op.id]} alt={op.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
             ) : (
               <span style={{ fontSize: Math.max(tileH * 0.40, 8), color: "#8af", fontWeight: 900, lineHeight: 1, userSelect: "none" }}>👤</span>
             )}
@@ -2576,7 +2614,7 @@ export default function App() {
                         width: avatarSize,
                         height: avatarSize,
                         borderRadius: "50%",
-                        background: u.fotoBase64 ? "transparent" : "linear-gradient(135deg, #00c850 0%, #00802f 100%)",
+                        background: photoCache[u.id] ? "transparent" : "linear-gradient(135deg, #00c850 0%, #00802f 100%)",
                         border: "2px solid rgba(0,255,100,0.8)",
                         boxShadow: "0 0 8px rgba(0,200,80,0.7)",
                         display: "flex",
@@ -2585,8 +2623,8 @@ export default function App() {
                         flexShrink: 0,
                         overflow: "hidden",
                       }}>
-                        {u.fotoBase64 ? (
-                          <img src={u.fotoBase64} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        {photoCache[u.id] ? (
+                          <img src={photoCache[u.id]} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
                           <span style={{ color: "#fff", fontSize: Math.max(avatarSize * 0.38, 8), fontWeight: 900, lineHeight: 1, userSelect: "none" }}>
                             {initials}
@@ -2806,7 +2844,7 @@ export default function App() {
             nome: rankingData.cidade[0].name,
             pontos: rankingData.cidade[0].rankingPoints,
             label: `${rankingData.cidade[0].cidade} - ${rankingData.cidade[0].estado}`,
-            foto: rankingData.cidade[0].fotoBase64,
+            foto: photoCache[rankingData.cidade[0].id],
             id: rankingData.cidade[0].id,
             cidade: rankingData.cidade[0].cidade,
             estado: rankingData.cidade[0].estado,
@@ -2816,7 +2854,7 @@ export default function App() {
             nome: rankingData.brasil[0].name,
             pontos: rankingData.brasil[0].rankingPoints,
             label: `${rankingData.brasil[0].cidade} - ${rankingData.brasil[0].estado}`,
-            foto: rankingData.brasil[0].fotoBase64,
+            foto: photoCache[rankingData.brasil[0].id],
             id: rankingData.brasil[0].id,
             cidade: rankingData.brasil[0].cidade,
             estado: rankingData.brasil[0].estado,
@@ -2826,7 +2864,7 @@ export default function App() {
             nome: rankingData.estado[0].name,
             pontos: rankingData.estado[0].rankingPoints,
             label: `${rankingData.estado[0].cidade} - ${rankingData.estado[0].estado}`,
-            foto: rankingData.estado[0].fotoBase64,
+            foto: photoCache[rankingData.estado[0].id],
             id: rankingData.estado[0].id,
             cidade: rankingData.estado[0].cidade,
             estado: rankingData.estado[0].estado,
@@ -2964,8 +3002,8 @@ export default function App() {
                             <div style={{ fontSize: idx < 3 ? 11 : 8, fontWeight: 900, color: isMe ? color : "#555", lineHeight: 1, flexShrink: 0, width: 14, textAlign: "center" }}>{medal}</div>
                             {/* Foto */}
                             <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: `1.5px solid ${isMe ? color : "#2a2a2a"}`, background: "#111", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              {player.fotoBase64
-                                ? <img src={player.fotoBase64} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              {photoCache[player.id]
+                                ? <img src={photoCache[player.id]} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <span style={{ fontSize: 11 }}>👤</span>}
                             </div>
                             {/* Nome + pontos */}
