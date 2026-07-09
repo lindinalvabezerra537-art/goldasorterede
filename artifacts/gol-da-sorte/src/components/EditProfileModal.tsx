@@ -17,9 +17,10 @@ interface Props {
   initialSocialLink?: string | null;
   onClose: () => void;
   onUpdated: (updates: { fotoBase64?: string; rankingSocialLink?: string }) => void;
+  onSair?: () => void;
 }
 
-export default function EditProfileModal({ userId, initialSocialLink, onClose, onUpdated }: Props) {
+export default function EditProfileModal({ userId, initialSocialLink, onClose, onUpdated, onSair }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [loadingPhoto, setLoadingPhoto] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -288,6 +289,22 @@ export default function EditProfileModal({ userId, initialSocialLink, onClose, o
         }}>
           ← VOLTAR
         </button>
+
+        {onSair && (
+          <button onClick={() => { onSair(); onClose(); }} style={{
+            width: "100%",
+            background: "transparent",
+            color: G.error,
+            border: "1.5px solid rgba(255,85,85,0.3)",
+            borderRadius: 12, padding: "13px",
+            fontSize: 14, fontWeight: 900,
+            cursor: "pointer",
+            marginTop: 10,
+            letterSpacing: 1,
+          }}>
+            🚪 SAIR DA CONTA
+          </button>
+        )}
       </div>
     </div>
   );

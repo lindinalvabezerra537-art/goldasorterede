@@ -2793,6 +2793,14 @@ export default function App() {
               ...(updates.rankingSocialLink !== undefined ? { rankingSocialLink: updates.rankingSocialLink } : {}),
             } : prev);
           }}
+          onSair={() => {
+            localStorage.removeItem("golUserId");
+            localStorage.removeItem("golUserName");
+            localStorage.removeItem("golUserPhone");
+            setShowEditPhoto(false);
+            setUserId(null);
+            setUserInfo(null);
+          }}
         />
       )}
       {/* ── BOTÃO PROMOÇÃO 100 JOGADAS ── */}
