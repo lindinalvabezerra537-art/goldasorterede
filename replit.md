@@ -4,7 +4,8 @@ App de apostas/loteria esportiva onde jogadores compram jogadas, escolhem posiç
 
 ## Run & Operate
 
-- **Iniciar tudo**: workflow `Start application` (roda `bash start.sh`) — inicia API na porta 8081 e frontend na porta 5000
+- **Iniciar tudo**: workflow `Project` (roda em paralelo `Start application` + `artifacts/api-server: API Server`) — frontend na porta 5000, API na porta 8081. `Start application` sozinho só sobe o frontend.
+- Os workflows `artifacts/gol-da-sorte: web` e `artifacts/mockup-sandbox: Component Preview Server` são gerados automaticamente pelos artifacts e não são usados no dia a dia — ignore-os.
 - `pnpm install` — instalar dependências (necessário após clonar/importar)
 - `pnpm run typecheck` — checar tipos em todos os pacotes
 - `pnpm run build` — typecheck + build de todos os pacotes
